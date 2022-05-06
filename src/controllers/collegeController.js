@@ -56,37 +56,36 @@ const colleges = async function(req,res){
 const collegeDetails = async function(req,res){
     try 
     {
-        let collegeName = req.query.collegeName
-        if(!collegeName)
-        return res.status(400).send({status:false, msg:"Plese write college Name"})
-
-        let getCollege = await collegeModel.findOne({name:collegeName})  
-        // console.log({...getCollege})   
-
-        if(!getCollege)
-        return res.status(404).send({status:false, msg:"no college found"})
-    
-        if(getCollege.isDeleted)
-        return res.status(400).send({status:false, message:"this College is deleted"})
-  
-        let Interests = await internModel.find({collegeId:getCollege, isDeleted:false}).select({_id:1, name:1, email:1, mobile:1})
-
-        let College = await collegeModel.findOne({name:collegeName}).select({name:1, fullName:1, logoLink:1, _id:0})
-        // console.log({...college})
-
-        College = College.toObject()
-        // console.log({...College})
-
-        if(Array.isArray(Interests) && Interests.length === 0){
-            College.Interest = "There is no intern at this college"
+           let queryData = req.query
+            let collegeName = queryData.collegeName
+            if(!isValidRequestBody(queryData))
+            return res.status(400).send({status:false, msg:"Plese write college Name"})
+        
+            let getCollege = await collegeModel.findOne({name:collegeName})
+           
+              
+            if(!getCollege)
+            return res.status(404).send({status:false, msg:"no college found"})
+            
+            if(getCollege.isDeleted)
+            return res.status(400).send({status:false, message:"this College is deleted"})
+        
+            getCollege = getCollege.toObject()
+            
+          
+            let getIntern = await internModel.find({collegeId:getCollege, isDeleted:false})
+        
+            if(Array.isArray(getIntern) && getIntern.length === 0){
+                getCollege.Interest = "There is no intern at this college"
+              
+            }
+            else{ 
+                getCollege.Interest = getIntern  
+            }
+           
+            res.status(200).send({status:true, data:getCollege})
         }
-        else{ 
-            College.Interest = Interests  
-        }
     
-        res.status(200).send({status:true, data:College})
-
-    }
     catch(err)
     {
         console.log(err.message)
